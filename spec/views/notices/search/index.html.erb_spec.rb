@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'notices/search/index.html.erb' do
   it "display the results" do
@@ -6,7 +6,7 @@ describe 'notices/search/index.html.erb' do
 
     render
 
-    expect(page).to have_css('.result', count: 5)
+    expect(rendered).to have_css('.result', count: 5)
   end
 
   it "includes facets" do
@@ -15,7 +15,7 @@ describe 'notices/search/index.html.erb' do
     render
 
     facet_data.keys.each do|facet|
-      expect(page).to have_css(".#{facet} span", count: 2)
+      expect(rendered).to have_css(".#{facet} span", count: 2)
     end
   end
 
@@ -29,10 +29,8 @@ describe 'notices/search/index.html.erb' do
 
     render
 
-    within('.result') do
-      expect(page).not_to have_content('on behalf of')
-      expect(page).not_to have_content('/faceted_search')
-    end
+    expect(rendered).not_to have_css( '.result', text: 'on behalf of')
+    expect(rendered).not_to have_css( '.result', text: '/faceted_search')
   end
 
   context "notice is sent on behalf of an entity" do
@@ -52,29 +50,23 @@ describe 'notices/search/index.html.erb' do
 
       render
 
-      within('.result') do
-        expect(page).to have_faceted_search_role_link(:sender_name, @notice)
-        expect(page).to have_faceted_search_role_link(:recipient_name, @notice)
-        expect(page).to have_faceted_search_role_link(:principal_name, @notice)
-      end
+      expect(rendered).to have_faceted_search_role_link(:sender_name, @notice)
+      expect(rendered).to have_faceted_search_role_link(:recipient_name, @notice)
+      expect(rendered).to have_faceted_search_role_link(:principal_name, @notice)
     end
 
     it "includes the relevant notice data" do
 
       render
 
-      within('.result') do
-        expect(page).to have_css('.title', text: 'A notice')
-        expect(page).to have_css(
-          '.date-received', text: @notice.date_received.to_s(:simple)
-        )
-        expect(page).to have_content(@on_behalf_of)
-        within('.topic') do
-          @notice.topics.each do |topic|
-            expect(page).to have_content(topic.name)
-          end
-        end
-        expect(page).to contain_link(notice_path(@notice))
+      expect(rendered).to have_link( @notice.title, href: notice_path(@notice) )
+      expect(rendered).to have_css(
+        '.result .date-received', text: @notice.date_received.to_s(:simple)
+      )
+      expect(rendered).to have_content( @on_behalf_of )
+
+      @notice.topics.each do |topic|
+        expect(rendered).to have_css( '.result .topic', text: topic.name)
       end
     end
   end
@@ -88,9 +80,7 @@ describe 'notices/search/index.html.erb' do
 
       render
 
-      within('.result') do
-        expect(page).to have_content('foo bar baz')
-      end
+      expect(rendered).to have_content('foo bar baz')
     end
 
     it 'sanatizes excerpts' do
@@ -109,18 +99,18 @@ describe 'notices/search/index.html.erb' do
 
   def mock_searcher(notices, options = {})
     results = notices.map { |notice| as_tire_result(notice, options) }
-    results.stub(:total_entries, results.length)
-    results.stub(:total_pages).and_return(1)
-    results.stub(:facets).and_return(facet_data)
-    results.stub(:current_page).and_return(1)
-    results.stub(:limit_value).and_return(1)
+    allow(results).to receive(:total_entries).and_return(results.length)
+    allow(results).to receive(:total_pages).and_return(1)
+    allow(results).to receive(:facets).and_return(facet_data)
+    allow(results).to receive(:current_page).and_return(1)
+    allow(results).to receive(:limit_value).and_return(1)
 
     search_results = double('results double')
-    search_results.stub(:results).and_return(results)
+    allow(search_results).to receive(:results).and_return(results)
 
     searcher = double('searcher double')
-    searcher.stub(:search).and_return(search_results)
-    searcher.stub(:cache_key).and_return('asdfasdf')
+    allow(searcher).to receive(:search).and_return(search_results)
+    allow(searcher).to receive(:cache_key).and_return('asdfasdf')
     assign(:searcher, searcher)
   end
 
@@ -138,6 +128,18 @@ describe 'notices/search/index.html.erb' do
           { "term" => "Imak Itten", "count" => 27 }
         ]
       },
+      "submitter_name_facet" => { "terms" =>
+        [
+          { "term" => "Google", "count" => 27 },
+          { "term" => "Twitter", "count" => 27 }
+        ]
+      },
+      "submitter_country_code_facet" => {"terms" =>
+        [
+          { "term" => "US", "count" => 27 },
+          { "term" => "UK", "count" => 27 }
+        ]
+        },
       "recipient_name_facet" => { "terms" =>
         [
           { "term" => "Twitter", "count" => 10 },

@@ -1,23 +1,16 @@
-development: &default
+development:
   adapter: postgresql
-  database: chill_development
   encoding: utf8
-  min_messages: warning
+  database: lumen_dev
   pool: 5
-  timeout: 5000
+  username: postgres
+  password: postgres
 
 test:
-  <<: *default
-  database: chill_test
-
-production:
   adapter: postgresql
-  username: <%= ENV['DATABASE_USERNAME'] %>
-  password: <%= ENV['DATABASE_PASSWORD'] %>
-  database: <%= ENV['DATABASE_NAME'] %>
-  host: <%= ENV['DATABASE_HOST'] %>
-  port: <%= ENV['DATABASE_PORT'].to_i %>
   encoding: utf8
-  min_messages: warning
+  database: lumen_test
   pool: 5
-  timeout: <%= (ENV['DATABASE_TIMEOUT'] || 5000).to_i %>
+  username: postgres
+  password: postgres
+
